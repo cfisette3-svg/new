@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from . import cash, content, dividends, options
+from . import cash, content, dividends, options, wheel
 from .adapters import SampleMarketAdapter, SampleRatesAdapter
 from .adapters.market import MarketAdapter
 from .adapters.rates import RatesAdapter
@@ -23,6 +23,7 @@ def build_digest(
 
     div_proj = dividends.project_dividends(portfolio, market, today=today)
     cc_ideas = options.scan_covered_calls(portfolio, market, today=today)
+    csp_ideas = wheel.scan_cash_secured_puts(portfolio, market, today=today)
     drafts = content.draft_posts(list(portfolio.keywords))
     sweep = cash.plan_cash_sweep(portfolio, rates)
 
@@ -31,7 +32,8 @@ def build_digest(
         for d in drafts:
             (drafts_dir / f"{d.slug}.md").write_text(d.body)
 
-    total_weekly_options = sum(i.premium_dollars for i in cc_ideas)
+    total_call_premium = sum(i.premium_dollars for i in cc_ideas)
+    total_put_premium = sum(i.premium_dollars for i in csp_ideas)
     weekly_cash = round(sweep.annual_yield_dollars / 52.0, 2)
     weekly_div = round(div_proj.next_12m_total / 52.0, 2)
 
@@ -41,7 +43,8 @@ def build_digest(
         "## This week's action list",
         "",
         f"- Collect **~${weekly_div:,.2f}/wk** in dividend run-rate from existing holdings.",
-        f"- Sell covered calls for **${total_weekly_options:,.2f}** in premium this week.",
+        f"- Sell covered calls for **${total_call_premium:,.2f}** in premium this week.",
+        f"- Sell cash-secured puts for **${total_put_premium:,.2f}** in premium this week.",
         f"- Park idle cash for **~${weekly_cash:,.2f}/wk** of risk-free interest.",
         f"- Publish **{len(drafts)}** affiliate drafts from `./drafts/`.",
         "",
@@ -49,6 +52,7 @@ def build_digest(
         "",
         dividends.render(div_proj),
         options.render(cc_ideas),
+        wheel.render(csp_ideas),
         cash.render(sweep),
         content.render(drafts),
         "---",

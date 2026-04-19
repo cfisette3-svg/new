@@ -12,6 +12,9 @@ dependencies = [
     "click>=8.1",
 ]
 
+[project.optional-dependencies]
+live = ["yfinance>=0.2"]
+
 [project.scripts]
 income-engine = "income_engine.cli:main"
 

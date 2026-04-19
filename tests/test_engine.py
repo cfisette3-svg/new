@@ -6,8 +6,10 @@ from income_engine.cash import plan_cash_sweep
 from income_engine.content import draft_posts
 from income_engine.digest import build_digest
 from income_engine.dividends import project_dividends
+from income_engine.notify import deliver
 from income_engine.options import scan_covered_calls
 from income_engine.portfolio import Portfolio
+from income_engine.wheel import scan_cash_secured_puts
 
 
 FIXED = date(2026, 4, 19)
@@ -75,8 +77,33 @@ def test_digest_contains_all_sections(tmp_path):
         "Weekly Income Digest",
         "Dividend cashflow",
         "Covered-call income ideas",
+        "Cash-secured put ideas",
         "Idle-cash sweep",
         "Affiliate content pipeline",
     ):
         assert heading in digest
     assert (tmp_path / "drafts").exists()
+
+
+def test_cash_secured_puts_respect_cash_budget(tmp_path):
+    portfolio = _portfolio(tmp_path)
+    ideas = scan_cash_secured_puts(portfolio, SampleMarketAdapter(today=FIXED), today=FIXED)
+    total_collateral = sum(i.collateral_required for i in ideas)
+    assert total_collateral <= portfolio.cash
+    # one idea per symbol max
+    assert len({i.symbol for i in ideas}) == len(ideas)
+    for i in ideas:
+        assert i.put.bid > 0
+        assert i.effective_cost_basis == round(i.put.strike - i.put.bid, 2)
+
+
+def test_notify_fails_loudly_without_config(monkeypatch):
+    for key in (
+        "INCOME_SMTP_HOST",
+        "INCOME_EMAIL_TO",
+        "INCOME_SLACK_WEBHOOK",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    results = deliver("subj", "body", ["email", "slack"])
+    assert {r.channel for r in results} == {"email", "slack"}
+    assert all(not r.ok for r in results)
