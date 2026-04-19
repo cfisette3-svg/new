@@ -57,12 +57,41 @@ Configure via environment:
 
 ## Schedule it
 
-Add to crontab to run every Sunday at 6pm and email the digest:
+### Option A — GitHub Actions (recommended, runs in the cloud)
+
+A workflow at `.github/workflows/weekly-digest.yml` runs every Sunday at
+22:00 UTC, generates the digest, emails / Slacks it to you, and uploads
+the markdown + drafts as a build artifact.
+
+One-time setup — go to **Settings → Secrets and variables → Actions →
+New repository secret** and add whichever of these you want to use:
+
+| Secret | Required for | Example |
+|--------|--------------|---------|
+| `INCOME_SMTP_HOST`  | email | `smtp.gmail.com` |
+| `INCOME_SMTP_PORT`  | email | `587` |
+| `INCOME_SMTP_USER`  | email | `you@gmail.com` |
+| `INCOME_SMTP_PASS`  | email | Gmail app password |
+| `INCOME_EMAIL_FROM` | email | `you@gmail.com` |
+| `INCOME_EMAIL_TO`   | email | `you@gmail.com` |
+| `INCOME_SLACK_WEBHOOK` | Slack | `https://hooks.slack.com/...` |
+
+To trigger it manually right now: **Actions → Weekly Income Digest →
+Run workflow**.
+
+### Option B — Local cron
 
 ```
 0 18 * * 0 cd /path/to/repo && income-engine run \
     --portfolio portfolio.yaml --live --notify email
 ```
+
+### Reading on iPhone
+
+Don't run Python on the phone. Use Option A above and the digest lands
+in your inbox / Slack on Sunday night. For ad-hoc runs from iOS, the
+free [a-Shell](https://apps.apple.com/app/a-shell/id1473805438) app
+runs `pip install -e .` and `income-engine run` natively.
 
 ## Modules
 

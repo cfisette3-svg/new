@@ -1,0 +1,62 @@
+name: Weekly Income Digest
+
+on:
+  schedule:
+    # Sunday 22:00 UTC ≈ Sunday 6pm ET / 3pm PT
+    - cron: "0 22 * * 0"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Use live yfinance data"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install package
+        run: pip install -e '.[live]'
+
+      - name: Run weekly digest
+        env:
+          INCOME_SMTP_HOST: ${{ secrets.INCOME_SMTP_HOST }}
+          INCOME_SMTP_PORT: ${{ secrets.INCOME_SMTP_PORT }}
+          INCOME_SMTP_USER: ${{ secrets.INCOME_SMTP_USER }}
+          INCOME_SMTP_PASS: ${{ secrets.INCOME_SMTP_PASS }}
+          INCOME_EMAIL_FROM: ${{ secrets.INCOME_EMAIL_FROM }}
+          INCOME_EMAIL_TO: ${{ secrets.INCOME_EMAIL_TO }}
+          INCOME_SLACK_WEBHOOK: ${{ secrets.INCOME_SLACK_WEBHOOK }}
+        run: |
+          LIVE_FLAG=""
+          if [ "${{ github.event.inputs.live || 'true' }}" = "true" ]; then
+            LIVE_FLAG="--live"
+          fi
+          NOTIFY=""
+          if [ -n "${INCOME_SMTP_HOST:-}" ]; then NOTIFY="$NOTIFY --notify email"; fi
+          if [ -n "${INCOME_SLACK_WEBHOOK:-}" ]; then NOTIFY="$NOTIFY --notify slack"; fi
+          income-engine run \
+            --portfolio examples/portfolio.yaml \
+            --out digest.md \
+            --drafts-dir drafts \
+            $LIVE_FLAG $NOTIFY
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-digest
+          path: |
+            digest.md
+            drafts/
+          retention-days: 30
