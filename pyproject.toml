@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "income-engine"
+version = "0.1.0"
+description = "Weekly passive-income automation toolkit"
+requires-python = ">=3.9"
+dependencies = [
+    "pyyaml>=6.0",
+    "click>=8.1",
+]
+
+[project.scripts]
+income-engine = "income_engine.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["income_engine*"]

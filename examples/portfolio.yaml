@@ -1,0 +1,24 @@
+cash: 12500.00
+
+holdings:
+  - symbol: SCHD
+    shares: 220
+    cost_basis: 28.40
+  - symbol: VYM
+    shares: 140
+    cost_basis: 310.10
+  - symbol: MSFT
+    shares: 110
+    cost_basis: 305.00
+  - symbol: JNJ
+    shares: 160
+    cost_basis: 18.20
+  - symbol: O
+    shares: 300
+    cost_basis: 180.00
+
+keywords:
+  - best standing desk under 500
+  - mechanical keyboard for programmers
+  - robot vacuum for pet hair
+  - ergonomic office chair lumbar support
