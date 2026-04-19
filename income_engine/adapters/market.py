@@ -33,6 +33,7 @@ class MarketAdapter(Protocol):
     def quote(self, symbol: str) -> Quote: ...
     def upcoming_dividends(self, symbol: str, horizon_days: int = 365) -> list[DividendEvent]: ...
     def weekly_calls(self, symbol: str, spot: float) -> list[OptionQuote]: ...
+    def weekly_puts(self, symbol: str, spot: float) -> list[OptionQuote]: ...
 
 
 def _seed(symbol: str) -> int:
@@ -88,6 +89,26 @@ class SampleMarketAdapter:
             intrinsic = max(0.0, spot - strike)
             extrinsic = spot * iv * 0.04 * (1.05 - pct)
             bid = round(max(0.02, intrinsic + extrinsic), 2)
+            out.append(
+                OptionQuote(
+                    symbol=symbol,
+                    strike=strike,
+                    expiration=expiration,
+                    bid=bid,
+                    implied_vol=round(iv, 3),
+                )
+            )
+        return out
+
+    def weekly_puts(self, symbol: str, spot: float) -> list[OptionQuote]:
+        s = _seed(symbol)
+        expiration = self._next_friday()
+        out: list[OptionQuote] = []
+        for i, pct in enumerate((0.99, 0.97, 0.95, 0.93)):
+            strike = round(spot * pct, 1)
+            iv = 0.24 + ((s >> (i * 3)) % 45) / 100.0
+            extrinsic = spot * iv * 0.04 * (pct - 0.90)
+            bid = round(max(0.02, extrinsic), 2)
             out.append(
                 OptionQuote(
                     symbol=symbol,
