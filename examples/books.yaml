@@ -1,0 +1,44 @@
+# Demo config: scrapes http://books.toscrape.com/ — a public site built
+# explicitly for scraper practice (no ToS issues).
+#
+# Run:
+#   python -m scraper examples/books.yaml -v
+#
+# Stand-in for a real e-commerce price/stock job: same shape (item card +
+# title + price + stock + detail link + pagination).
+
+name: books_demo
+start_urls:
+  - http://books.toscrape.com/
+
+item_selector: "article.product_pod"
+
+fields:
+  title:
+    selector: "h3 a"
+    attr: title
+  price:
+    selector: "p.price_color"
+  rating:
+    selector: "p.star-rating"
+    attr: class
+  stock:
+    selector: "p.availability"
+    transform: strip
+  detail_url:
+    selector: "h3 a"
+    attr: href
+
+pagination:
+  next_selector: "li.next a"
+  max_pages: 3
+
+request:
+  delay_seconds: 0.5
+  timeout: 20
+  retries: 3
+  rotate_user_agent: true
+
+output:
+  format: csv
+  path: out/books.csv

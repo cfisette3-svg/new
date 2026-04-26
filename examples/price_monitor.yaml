@@ -1,0 +1,45 @@
+# Template for a real e-commerce price/stock monitoring job.
+#
+# Replace the selectors with ones from the target site (right-click an item
+# card -> Inspect -> copy selector). The shape is intentionally identical to
+# books.yaml so a buyer can see exactly what they're paying for.
+#
+# IMPORTANT before using on a real site:
+#   1. Read the site's robots.txt and ToS.
+#   2. Keep delay_seconds polite (>=1.0 in production).
+#   3. Cache responses if you re-run frequently.
+
+name: price_monitor_template
+start_urls:
+  - https://example.com/category/widgets
+
+item_selector: "div.product-card"
+
+fields:
+  sku:
+    selector: "[data-sku]"
+    attr: data-sku
+  title:
+    selector: "a.product-title"
+  price:
+    selector: "span.price"
+  stock_status:
+    selector: "span.availability"
+    transform: strip
+  product_url:
+    selector: "a.product-title"
+    attr: href
+
+pagination:
+  next_selector: "a.pagination-next"
+  max_pages: 20
+
+request:
+  delay_seconds: 1.0
+  timeout: 30
+  retries: 4
+  rotate_user_agent: true
+
+output:
+  format: csv
+  path: out/price_monitor.csv
